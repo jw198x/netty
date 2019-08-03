@@ -122,7 +122,7 @@ class NioClientSocketPipelineSink extends AbstractChannelSink {
             NioClientSocketChannel channel, ChannelFuture future,
             SocketAddress localAddress) {
         try {
-            channel.socket.socket().bind(localAddress);
+            channel.socket.socket().bind(localAddress); // 底层绑定。
             channel.boundManually = true;
             channel.setBound();
             future.setSuccess();

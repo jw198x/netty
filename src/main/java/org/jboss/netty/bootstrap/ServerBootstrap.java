@@ -270,7 +270,7 @@ public class ServerBootstrap extends Bootstrap {
         final BlockingQueue<ChannelFuture> futureQueue =
             new LinkedBlockingQueue<ChannelFuture>();
 
-        ChannelHandler binder = new Binder(localAddress, futureQueue);
+        ChannelHandler binder = new Binder(localAddress, futureQueue);  // 处理Open事件的处理器。
         ChannelHandler parentHandler = getParentHandler();
 
         ChannelPipeline bossPipeline = pipeline();
@@ -279,6 +279,8 @@ public class ServerBootstrap extends Bootstrap {
             bossPipeline.addLast("userHandler", parentHandler);
         }
 
+        // NIOServerSocketChannelFactory。channel里有sink。
+        // newChannel里面创建了socket。
         Channel channel = getFactory().newChannel(bossPipeline);
 
         // Wait until the future is available.

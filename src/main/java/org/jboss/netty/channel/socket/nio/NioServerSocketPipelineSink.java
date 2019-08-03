@@ -70,7 +70,7 @@ class NioServerSocketPipelineSink extends AbstractChannelSink {
     public void eventSunk(
             ChannelPipeline pipeline, ChannelEvent e) throws Exception {
         Channel channel = e.getChannel();
-        if (channel instanceof NioServerSocketChannel) {
+        if (channel instanceof NioServerSocketChannel) { // ServerSocket
             handleServerSocket(e);
         } else if (channel instanceof NioSocketChannel) {
             handleAcceptedSocket(e);
@@ -97,7 +97,7 @@ class NioServerSocketPipelineSink extends AbstractChannelSink {
             break;
         case BOUND:
             if (value != null) {
-                bind(channel, future, (SocketAddress) value);
+                bind(channel, future, (SocketAddress) value); // 真正bind socket的地方。
             } else {
                 close(channel, future);
             }
@@ -145,18 +145,18 @@ class NioServerSocketPipelineSink extends AbstractChannelSink {
         boolean bound = false;
         boolean bossStarted = false;
         try {
-            channel.socket.socket().bind(localAddress, channel.getConfig().getBacklog());
+            channel.socket.socket().bind(localAddress, channel.getConfig().getBacklog()); // JDK级别的绑定socket。
             bound = true;
 
-            future.setSuccess();
-            fireChannelBound(channel, channel.getLocalAddress());
+            future.setSuccess(); // 更新future。
+            fireChannelBound(channel, channel.getLocalAddress()); //
 
             Executor bossExecutor =
                 ((NioServerSocketChannelFactory) channel.getFactory()).bossExecutor;
             DeadLockProofWorker.start(
                     bossExecutor,
                     new ThreadRenamingRunnable(
-                            new Boss(channel),
+                            new Boss(channel), // Boss里面是JDK的acceptor死循环。
                             "New I/O server boss #" + id + " (" + channel + ')'));
             bossStarted = true;
         } catch (Throwable t) {
@@ -241,9 +241,9 @@ class NioServerSocketPipelineSink extends AbstractChannelSink {
                             selector.selectedKeys().clear();
                         }
 
-                        SocketChannel acceptedSocket = channel.socket.accept();
+                        SocketChannel acceptedSocket = channel.socket.accept(); // JDK的SocketChannel
                         if (acceptedSocket != null) {
-                            registerAcceptedChannel(acceptedSocket, currentThread);
+                            registerAcceptedChannel(acceptedSocket, currentThread); // 封装Netty的SochetChannel。
                         }
                     } catch (SocketTimeoutException e) {
                         // Thrown every second to get ClosedChannelException
@@ -277,9 +277,13 @@ class NioServerSocketPipelineSink extends AbstractChannelSink {
                     channel.getConfig().getPipelineFactory().getPipeline();
                 NioWorker worker = nextWorker();
                 worker.register(new NioAcceptedSocketChannel(
-                        channel.getFactory(), pipeline, channel,
-                        NioServerSocketPipelineSink.this, acceptedSocket,
-                        worker, currentThread), null);
+                        channel.getFactory(),
+                        pipeline,
+                        channel,
+                        NioServerSocketPipelineSink.this,
+                        acceptedSocket,
+                        worker,
+                        currentThread), null);
             } catch (Exception e) {
                 logger.warn(
                         "Failed to initialize an accepted socket.", e);

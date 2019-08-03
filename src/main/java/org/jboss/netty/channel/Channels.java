@@ -465,7 +465,7 @@ public class Channels {
             throw new NullPointerException("localAddress");
         }
         ChannelFuture future = future(channel);
-        channel.getPipeline().sendDownstream(new DownstreamChannelStateEvent(
+        channel.getPipeline().sendDownstream(new DownstreamChannelStateEvent( // Sink来执行 !!
                 channel, future, ChannelState.BOUND, localAddress));
         return future;
     }
